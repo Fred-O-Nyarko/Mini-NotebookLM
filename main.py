@@ -76,7 +76,7 @@ def get_rag_response(query, vectorstore, api_key):
     """
     
     response = client.models.generate_content(
-        model="gemini-2.0-flash", # Assuming user meant latest available if Gemini 3 is not out or they meant 2.0
+        model="gemini-3-flash-preview", # Assuming user meant latest available if Gemini 3 is not out or they meant 2.0
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0,
