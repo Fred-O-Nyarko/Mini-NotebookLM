@@ -10,6 +10,8 @@ from langchain_core.callbacks.manager import CallbackManagerForRetrieverRun
 from bs4 import BeautifulSoup
 import requests
 import tempfile
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Configuration & Setup ---
 st.set_page_config(page_title="Mini-NotebookLM", layout="wide")
@@ -27,17 +29,19 @@ def process_text(text_content):
     docs = text_splitter.create_documents([text_content])
     return docs
 
-def process_pdf(uploaded_file):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        tmp_path = tmp_file.name
+def process_pdf(uploaded_files):
+    full_text = ""
+    for uploaded_file in uploaded_files:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(uploaded_file.read())
+            tmp_path = tmp_file.name
     
-    loader = PyPDFLoader(tmp_path)
-    pages = loader.load()
-    os.unlink(tmp_path)
+        loader = PyPDFLoader(tmp_path)
+        pages = loader.load()
+        os.unlink(tmp_path)
     
     # Extract text and chunk semantically
-    full_text = "\n".join([page.page_content for page in pages])
+        full_text = full_text + "\n".join([page.page_content for page in pages])
     return process_text(full_text)
 
 def process_url(url):
@@ -88,7 +92,7 @@ def get_rag_response(query, vectorstore, api_key):
 st.title("Mini Notebook LM")
 
 # API Key handling
-api_key = st.sidebar.text_input("Enter Google API Key", type="password")
+api_key = os.getenv("GEMINI_API_KEY")
 
 if api_key:
     vectorstore = get_vectorstore()
@@ -97,7 +101,7 @@ if api_key:
     # Sidebar for Ingestion
     with st.sidebar:
         st.header("Data Ingestion")
-        uploaded_file = st.file_uploader("Upload PDF", type="pdf")
+        uploaded_file = st.file_uploader("Upload PDF", type="pdf", accept_multiple_files=True)
         url_input = st.text_input("Enter URL")
         
         if st.button("Index Data"):
